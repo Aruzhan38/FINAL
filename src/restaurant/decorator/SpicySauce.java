@@ -1,4 +1,4 @@
 package restaurant.decorator;
 
-public class SpicySauce {
+public abstract class SpicySauce {
 }
