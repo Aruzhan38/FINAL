@@ -1,4 +1,10 @@
 package restaurant.observer;
 
-public class OrderStatus {
+public enum OrderStatus {
+    CREATED,
+    ACCEPTED,
+    COOKING,
+    READY,
+    DELIVERED,
+    CANCELLED
 }

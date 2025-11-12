@@ -1,4 +1,5 @@
 package restaurant.observer;
 
-public class OrderObserver {
+public interface OrderObserver {
+    void onStatusChanged(String orderId, OrderStatus newStatus);
 }
