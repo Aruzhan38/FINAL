@@ -1,6 +1,8 @@
 package restaurant.core;
 
-public interface Meal extends Named {
-    int price();
-    void accept(MealVisitor visitor);
+public interface Meal {
+    String getName();
+    double getPrice();
+
+    default void accept(MealVisitor visitor) { visitor.visit(this); }
 }

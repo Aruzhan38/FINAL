@@ -1,8 +1,10 @@
 package restaurant.core;
 
 public enum OrderStatus {
-    PLACED,
+    CREATED,
+    ACCEPTED,
     COOKING,
     READY,
-    DELIVERED
+    DELIVERED,
+    CANCELLED
 }

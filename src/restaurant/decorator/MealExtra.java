@@ -8,14 +8,15 @@ public abstract class MealExtra implements Meal {
     protected MealExtra(Meal base){
         this.base=base;
     }
+
     @Override
-    public String name() {
-        return base.name();
+    public String getName() {
+        return base.getName();
     }
 
     @Override
-    public int price() {
-        return base.price();
+    public double getPrice() {
+        return base.getPrice();
     }
 
 }
