@@ -1,33 +1,48 @@
 package restaurant.visitor;
 
+import restaurant.core.*;
 import restaurant.core.MealVisitor;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
-public final class NutritionVisitor implements MealVisitor {
-    private int calories = 0;
-    private final Set<String> allergens = new HashSet<>();
+public class NutritionVisitor implements MealVisitor {
+    private final Map<String, Integer> kcalByName = new HashMap<>();
+    private int totalKcal = 0;
 
-    @Override
-    public void visitBase(String baseName, int basePrice, int baseCalories, Set<String> baseAllergens) {
-        calories += baseCalories;
-        if (baseAllergens != null) allergens.addAll(baseAllergens);
+    public NutritionVisitor() {
+
+        kcalByName.put("Manty", 420);
+        kcalByName.put("Iskender Kebab", 650);
+        kcalByName.put("Tteokbokki", 380);
+
+        kcalByName.put("Baursak", 250);
+        kcalByName.put("Pilav", 270);
+        kcalByName.put("Kimchi", 40);
+
+        kcalByName.put("Kymyz", 120);
+        kcalByName.put("Ayran", 90);
+        kcalByName.put("Barley Tea", 5);
+
+        kcalByName.put("Spicy Sauce", 20);
+        kcalByName.put("Extra Cheese", 110);
+        kcalByName.put("Extra Meat", 180);
+        kcalByName.put("Fresh Herbs", 5);
     }
 
-    @Override
-    public void visitExtra(String extraName, int extraPrice, int extraCalories, Set<String> extraAllergens) {
-        calories += extraCalories;
-        if (extraAllergens != null) allergens.addAll(extraAllergens);
+    public NutritionVisitor with(String name, int kcal) {
+        kcalByName.put(name, kcal);
+        return this;
     }
 
-    @Override
-    public void end() { }
+    @Override public void visit(Meal meal)  { add(meal.getName()); }
+    @Override public void visit(Side side)  { add(side.getName()); }
+    @Override public void visit(Drink drink){ add(drink.getName()); }
 
-    public int getCalories() {
-        return calories;
+    private void add(String name) {
+        totalKcal += kcalByName.getOrDefault(name, 0);
     }
 
-    public Set<String> getAllergens() {
-        return Set.copyOf(allergens);
+    public int getTotalKcal() {
+        return totalKcal;
     }
 }
