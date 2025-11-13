@@ -8,14 +8,14 @@ import restaurant.core.Side;
 import java.util.Collections;
 import java.util.Set;
 
-public abstract class Combo implements Meal {
+public class Combo implements Meal {
     private final Meal main;
     private final Drink drink;
     private final Side side;
-    private final int discount;
+    private final double discount;
     private final String label;
 
-    public Combo(Meal main,Drink drink,Side side,int discount, String label){
+    public Combo(Meal main,Drink drink,Side side,double discount, String label){
         this.main=main;
         this.drink=drink;
         this.side=side;

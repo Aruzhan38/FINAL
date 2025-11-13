@@ -2,18 +2,18 @@ package restaurant.decorator;
 
 import restaurant.core.Meal;
 
-public abstract class FreshHerbs extends MealExtra{
+public class FreshHerbs extends MealExtra{
     public FreshHerbs(Meal base){
         super(base);
     }
 
     @Override
-    public String name() {
-        return super.name()+" fresh herbs";
+    public String getName() {
+        return super.getName()+" fresh herbs";
     }
 
     @Override
-    public int price() {
-        return super.price()+100;
+    public double getPrice() {
+        return super.getPrice()+100;
     }
 }
