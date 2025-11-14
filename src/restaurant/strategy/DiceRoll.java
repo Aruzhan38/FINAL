@@ -1,15 +1,21 @@
 package restaurant.strategy;
+import java.util.Random;
 
 public class DiceRoll implements DiscountStrategy{
     public DiscountContext ctx;
+    private final Random random=new Random();
 
     @Override
     public void collect(DiscountContext ctx) {
         this.ctx=ctx;
+        if (this.ctx.diceRoll==null){
+            this.ctx.diceRoll= random.nextInt(6)+1;
+        }
     }
 
     @Override
     public boolean validate() {
+
         return ctx!=null && ctx.diceRoll !=null && ctx.diceRoll>=1 && ctx.diceRoll<=6;
     }
 
@@ -20,8 +26,8 @@ public class DiceRoll implements DiscountStrategy{
             case 1->0;
             case 2->5;
             case 3->10;
-            case 4->3;
-            case 5->20;
+            case 4->20;
+            case 5->40;
             case 6->50;
             default -> 0;
         };
@@ -31,6 +37,6 @@ public class DiceRoll implements DiscountStrategy{
 
     @Override
     public String name() {
-        return "Dice roll discount!"+ ctx.diceRoll;
+        return "Dice roll discount!: "+ ctx.diceRoll;
     }
 }
