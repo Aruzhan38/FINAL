@@ -39,7 +39,6 @@ public class NutritionVisitor implements MealVisitor {
             totalKcal += kcal;
         }
     }
-
     @Override
     public void visit(Meal meal)  { add(meal); }
 

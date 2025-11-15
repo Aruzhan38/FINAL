@@ -8,15 +8,21 @@ import restaurant.core.side.Side;
 import restaurant.decorator.*;
 import restaurant.observer.*;
 import restaurant.strategy.*;
-import restaurant.visitor.NutritionVisitor;
 
 public class OrderFacade {
 
-    private static int counter = 1;
-    private static String nextOrderId() {
-        return "ORDER-" + (counter++);
-    }
+    private final OrderIdService idService;
+    private final PriceService priceService;
+    private final NutritionService nutritionService;
+    private final OrderCheckService checkService;
 
+    public OrderFacade() {
+        this.idService = new OrderIdService();
+        this.priceService = new PriceService();
+        this.nutritionService = new NutritionService();
+        this.checkService = new OrderCheckService();
+    }
+    // creating an order
     public Order createOrder(CuisineFactory factory,
                              boolean extraCheese,
                              boolean extraSeasons,
@@ -26,27 +32,28 @@ public class OrderFacade {
                              DiscountContext ctx,
                              String customerName) {
 
-        String id = nextOrderId();
-
+        String id = idService.nextOrderId();
+        // creation of base products using Abstract Factory
         Meal meal = factory.createMeal();
         Side side = factory.createSide();
         Drink drink = factory.createDrink();
-
+        // wrapping meal with decorators - extras
         if (spicySauce) meal = new SpicySauce(meal);
         if (extraSeasons) meal = new ExtraSeasons(meal);
         if (extraCheese) meal = new ExtraCheese(meal);
         if (freshHerbs) meal = new FreshHerbs(meal);
-
+        // building order by using Builder
         Order order = new OrderBuilder()
                 .setId(id)
                 .build();
+
         attachObservers(order, customerName, "MainLine");
 
-        int basePrice = (int) calcBasePrice(meal, side, drink);
+        int basePrice = (int) priceService.calcBasePrice(meal, side, drink);
 
         int finalPrice = basePrice;
         String discountName = "No discount";
-
+        // applying discount
         if (discount != null) {
             discount.collect(ctx);
             if (discount.validate()) {
@@ -54,10 +61,10 @@ public class OrderFacade {
             }
             discountName = discount.name();
         }
+        // calculating calories using Visitor
+        int kcal = nutritionService.calcCalories(meal, side, drink);
 
-        int kcal = calcCalories(meal, side, drink);
-
-        printSummary(order, meal, side, drink, basePrice, finalPrice, discountName, kcal);
+        checkService.printSummary(order, meal, side, drink, basePrice, finalPrice, discountName, kcal);
 
         return order;
     }
@@ -68,50 +75,8 @@ public class OrderFacade {
         order.addObserver(kitchen);
         order.addObserver(customer);
     }
-
+    // updating order status and notification all observers about the change
     public void updateStatus(Order order, OrderStatus newStatus) {
         order.setStatus(newStatus);
-    }
-
-    private double calcBasePrice(Meal meal, Side side, Drink drink) {
-        int total = 0;
-        if (meal != null) total += meal.getPrice();
-        if (side != null) total += side.getPrice();
-        if (drink != null) total += drink.getPrice();
-        return total;
-    }
-
-    private int calcCalories(Meal meal, Side side, Drink drink) {
-        NutritionVisitor visitor = new NutritionVisitor();
-        if (meal != null) meal.accept(visitor);
-        if (side != null) side.accept(visitor);
-        if (drink != null) drink.accept(visitor);
-        return visitor.getTotalKcal();
-    }
-
-    private void printSummary(Order order,
-                              Meal meal,
-                              Side side,
-                              Drink drink,
-                              int basePrice,
-                              int finalPrice,
-                              String discountName,
-                              int kcal) {
-
-        System.out.println("==============================================");
-        System.out.println("Order ID: " + order.getId());
-        System.out.println("Type    : SET");
-
-        if (meal != null) System.out.println("Meal   : " + meal.getName());
-        if (side != null) System.out.println("Side   : " + side.getName());
-        if (drink != null) System.out.println("Drink  : " + drink.getName());
-
-        System.out.println("----------------------------------------------");
-        System.out.println("Base price : " + basePrice);
-        System.out.println("Discount   : " + discountName);
-        System.out.println("Final price: " + finalPrice);
-        System.out.println("Calories   : " + kcal + " kcal");
-        System.out.println("Status     : " + order.getStatus());
-        System.out.println("==============================================");
     }
 }

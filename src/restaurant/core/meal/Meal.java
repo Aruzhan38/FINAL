@@ -6,5 +6,7 @@ public interface Meal {
     String getName();
     int getPrice();
 
-    default void accept(MealVisitor visitor) { visitor.visit(this); }
+    default void accept(MealVisitor visitor) {
+        visitor.visit(this);
+    }
 }
