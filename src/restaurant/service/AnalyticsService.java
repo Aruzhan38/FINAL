@@ -1,4 +1,4 @@
-package restaurant;
+package restaurant.service;
 
 import restaurant.observer.*;
 import java.util.*;

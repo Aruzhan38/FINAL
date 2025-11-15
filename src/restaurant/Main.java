@@ -6,23 +6,21 @@ import restaurant.core.meal.Meal;
 import restaurant.core.side.Side;
 import restaurant.facade.OrderFacade;
 import restaurant.observer.*;
+import restaurant.service.*;
 import restaurant.strategy.*;
-import restaurant.visitor.NutritionVisitor;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.*;
 
 public class Main {
     private static final Scanner in = new Scanner(System.in);
+
     private static final List<OrderRecord> ORDER_HISTORY = new ArrayList<>();
     private static final AnalyticsService analytics = new AnalyticsService();
+    private static final DiscountService discountService = new DiscountService();
+    private static final MenuInfoService menuInfoService = new MenuInfoService();
 
     public static void main(String[] args) {
 
         OrderFacade facade = new OrderFacade();
-
         System.out.println("=== RESTAURANT ORDERING SYSTEM ===");
 
         while (true) {
@@ -33,13 +31,13 @@ public class Main {
             System.out.println("  4) View dishes info");
             System.out.println("  5) Exit\n");
 
-            int choice = askIntInRange("Choose option (1-5): ", 1, 5);
+            int choice = discountService.askIntInRange("Choose option (1-5): ", 1, 5);
 
             switch (choice) {
                 case 1 -> makeOrder(facade);
                 case 2 -> analytics.showOrderHistory(ORDER_HISTORY);
                 case 3 -> analytics.showStatistics(ORDER_HISTORY);
-                case 4 -> showDishesInfo();
+                case 4 -> menuInfoService.showDishesInfo();
                 case 5 -> {
                     System.out.println("\nThank you for using our system. Goodbye! 👋");
                     return;
@@ -54,37 +52,36 @@ public class Main {
         String customerName = in.nextLine().trim();
         if (customerName.isEmpty()) customerName = "Guest";
 
+        // Choose cuisine via Abstract Factory
         CuisineFactory factory = chooseCuisine();
         String cuisineName = factory.getClass().getSimpleName();
 
+        // Preview selected set
         showMenuForCuisine(factory);
-        boolean extraCheese=false;
-        boolean extraSeasons=false;
-        boolean spicySauce=false;
-        boolean freshHerbs=false;
-        boolean wantExtras=askYesNo("do you want any extras? (y/n) ");
 
-        if(wantExtras){
-            System.out.println("choose your options");
-            extraCheese   = askYesNo("Add Extra Cheese? (y/n): ");
-            extraSeasons  = askYesNo("Add Extra Seasons? (y/n): ");
-            spicySauce    = askYesNo("Add Spicy Sauce? (y/n): ");
-            freshHerbs    = askYesNo("Add Fresh Herbs? (y/n): ");
+        // Extras (decorators)
+        boolean extraCheese   = false;
+        boolean extraSeasons  = false;
+        boolean spicySauce    = false;
+        boolean freshHerbs    = false;
 
+        boolean wantExtras = discountService.askYesNo("Do you want any extras? (y/n): ");
+        if (wantExtras) {
+            System.out.println("Choose your options:");
+            extraCheese   = discountService.askYesNo("Add Extra Cheese? (y/n): ");
+            extraSeasons  = discountService.askYesNo("Add Extra Seasons? (y/n): ");
+            spicySauce    = discountService.askYesNo("Add Spicy Sauce? (y/n): ");
+            freshHerbs    = discountService.askYesNo("Add Fresh Herbs? (y/n): ");
+        } else {
+            System.out.println("No extras selected.");
         }
-        else{
-            System.out.println("no extra");
-        }
 
-
-
-
-        DiscountStrategy strategy = chooseDiscountStrategy();
-        DiscountContext ctx = buildDiscountContext(strategy);
-
-        Order order = facade.createOrder(factory, extraCheese, extraSeasons, spicySauce, freshHerbs,
-                strategy, ctx, customerName
-        );
+        // discount
+        DiscountStrategy strategy = discountService.chooseDiscountStrategy();
+        DiscountContext  ctx      = discountService.buildContext(strategy);
+        // create order via Facade
+        Order order = facade.createOrder( factory, extraCheese, extraSeasons, spicySauce,
+                freshHerbs, strategy, ctx, customerName );
 
         System.out.println("\n--- ORDER STATUS FLOW ---");
         waitEnter("Press ENTER to ACCEPT the order... ");
@@ -100,53 +97,10 @@ public class Main {
         facade.updateStatus(order, OrderStatus.DELIVERED);
 
         String discountName = (strategy == null) ? "No discount" : strategy.name();
+
         ORDER_HISTORY.add( new OrderRecord( order.getId(), customerName, cuisineName, discountName, order.getStatus()));
 
         System.out.println("\nOrder finished. Returning to main menu...\n");
-    }
-
-    private static void showDishesInfo() {
-        System.out.println("\n=== DISHES INFO (PRICE + KCAL) ===");
-
-        System.out.println("\n[Meals]");
-        printMealInfo(new Kazakh().createMeal());
-        printMealInfo(new Turkish().createMeal());
-        printMealInfo(new Korean().createMeal());
-
-        System.out.println("\n[Sides]");
-        printSideInfo(new Kazakh().createSide());
-        printSideInfo(new Turkish().createSide());
-        printSideInfo(new Korean().createSide());
-
-        System.out.println("\n[Drinks]");
-        printDrinkInfo(new Kazakh().createDrink());
-        printDrinkInfo(new Turkish().createDrink());
-        printDrinkInfo(new Korean().createDrink());
-
-        System.out.println("----------------------------------");
-        System.out.println("Press ENTER to return to main menu...");
-        in.nextLine();
-    }
-
-    private static void printMealInfo(Meal meal) {
-        NutritionVisitor v = new NutritionVisitor();
-        meal.accept(v);
-        System.out.printf("- %s | price: %d%n",
-                meal.getName(), meal.getPrice());
-    }
-
-    private static void printSideInfo(Side side) {
-        NutritionVisitor v = new NutritionVisitor();
-        side.accept(v);
-        System.out.printf("- %s | price: %d | kcal: %d%n",
-                side.getName(), side.getPrice(), v.getTotalKcal());
-    }
-
-    private static void printDrinkInfo(Drink drink) {
-        NutritionVisitor v = new NutritionVisitor();
-        drink.accept(v);
-        System.out.printf("- %s | price: %d | kcal: %d%n",
-                drink.getName(), drink.getPrice(), v.getTotalKcal());
     }
 
     private static CuisineFactory chooseCuisine() {
@@ -155,100 +109,13 @@ public class Main {
         System.out.println("  2) Turkish");
         System.out.println("  3) Korean");
 
-        int choice = askIntInRange("Your choice (1-3): ", 1, 3);
+        int choice = discountService.askIntInRange("Your choice (1-3): ", 1, 3);
         return switch (choice) {
             case 1 -> new Kazakh();
             case 2 -> new Turkish();
             case 3 -> new Korean();
             default -> throw new IllegalStateException("Unexpected cuisine: " + choice);
         };
-    }
-
-    private static DiscountStrategy chooseDiscountStrategy() {
-        System.out.println("\nChoose discount type:");
-        System.out.println("  0) No discount");
-        System.out.println("  1) Pink Friday");
-        System.out.println("  2) Dice roll");
-        System.out.println("  3) Tsunami Day");
-        System.out.println("  4) Spicy Challenge");
-
-        int choice = askIntInRange("Your choice (0-4): ", 0, 4);
-        return switch (choice) {
-            case 0 -> null;
-            case 1 -> new PinkFriday();
-            case 2 -> new DiceRoll();
-            case 3 -> new TsunamiDay();
-            case 4 -> new SpicyChallenge();
-            default -> throw new IllegalStateException("Unexpected strategy: " + choice);
-        };
-    }
-
-    private static final Random random=new Random();
-
-    private static DiscountContext buildDiscountContext(DiscountStrategy strategy) {
-        DiscountContext ctx = new DiscountContext();
-        DayOfWeek[] days= DayOfWeek.values();
-        DayOfWeek randomDay=days[random.nextInt(days.length)];
-        LocalDate today=LocalDate.now();
-        while (today.getDayOfWeek()!=randomDay){
-            today=today.plusDays(1);
-        }
-        ctx.today=today;
-        System.out.println("Today is "+randomDay);
-
-
-        if(strategy instanceof PinkFriday){
-            if(randomDay==DayOfWeek.FRIDAY){
-                ctx.wearingPink=askYesNo("are you wearing pink today?");
-            }
-            else{
-                System.out.println("today is not friday, no discount bro");
-            }
-            return ctx;
-        }
-        if (strategy instanceof TsunamiDay){
-            Weather[] weathers=Weather.values();
-            ctx.weather=weathers[random.nextInt(weathers.length)];
-            System.out.println("today weather is "+ctx.weather);
-        }
-
-        if (strategy instanceof DiceRoll){
-            System.out.println("dice roll will randomly picked: ");
-        }
-
-        if (strategy instanceof SpicyChallenge){
-            ctx.spicyChallenge = askYesNo("Did you finish the spicy challenge? (y/n): ");
-        }
-        return ctx;
-    }
-
-    private static boolean askYesNo(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String s = in.nextLine().trim().toLowerCase(Locale.ROOT);
-            if (s.equals("y") || s.equals("yes")) return true;
-            if (s.equals("n") || s.equals("no"))  return false;
-            System.out.println("Please answer 'y' or 'n'.");
-        }
-    }
-
-    private static int askIntInRange(String prompt, int min, int max) {
-        while (true) {
-            System.out.print(prompt);
-            String line = in.nextLine().trim();
-            try {
-                int value = Integer.parseInt(line);
-                if (value >= min && value <= max) {
-                    return value;
-                }
-            } catch (Exception ignored) {}
-            System.out.printf("Please enter a number between %d and %d.%n", min, max);
-        }
-    }
-
-    private static void waitEnter(String msg) {
-        System.out.print(msg);
-        in.nextLine();
     }
 
     private static void showMenuForCuisine(CuisineFactory factory) {
@@ -261,5 +128,10 @@ public class Main {
         System.out.println("Side dish : " + previewSide.getName());
         System.out.println("Drink     : " + previewDrink.getName());
         System.out.println("(You can add extras and discounts)\n");
+    }
+
+    private static void waitEnter(String msg) {
+        System.out.print(msg);
+        in.nextLine();
     }
 }
