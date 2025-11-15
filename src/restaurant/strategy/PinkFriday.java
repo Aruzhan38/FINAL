@@ -22,6 +22,6 @@ public class PinkFriday implements DiscountStrategy{
 
     @Override
     public String name() {
-        return "yay you got discount cuz you are wearing pink in friday!";
+        return "discount wearing pink in friday!";
     }
 }

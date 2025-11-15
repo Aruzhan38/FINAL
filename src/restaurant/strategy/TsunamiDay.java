@@ -20,6 +20,6 @@ public class TsunamiDay implements DiscountStrategy{
 
     @Override
     public String name() {
-        return "you got discount , for tsunami day!";
+        return "yay you got discount , for tsunami day!";
     }
 }

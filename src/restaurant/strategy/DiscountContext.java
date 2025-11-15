@@ -6,10 +6,10 @@ import java.time.LocalTime;
 
 public class DiscountContext {
     public Meal meal;
-    public LocalDate today=LocalDate.now();
-    public LocalTime now=LocalTime.now();
+    public LocalDate today;
+    public LocalTime now;
     public boolean wearingPink;
-    public Weather weather=Weather.TSUNAMI;
+    public Weather weather;
     public boolean spicyChallenge;
     public Integer diceRoll;
 }

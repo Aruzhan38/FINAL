@@ -7,10 +7,11 @@ import restaurant.observer.Order;
 import restaurant.observer.OrderStatus;
 import restaurant.strategy.*;
 import restaurant.visitor.NutritionVisitor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Scanner;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
 
 public class Main {
 
@@ -77,11 +78,26 @@ public class Main {
         String cuisineName = factory.getClass().getSimpleName();
 
         showMenuForCuisine(factory);
+        boolean extraCheese=false;
+        boolean extraSeasons=false;
+        boolean spicySauce=false;
+        boolean freshHerbs=false;
+        boolean wantExtras=askYesNo("do you want any extras? (y/n) ");
 
-        boolean extraCheese   = askYesNo("Add Extra Cheese? (y/n): ");
-        boolean extraSeasons  = askYesNo("Add Extra Seasons? (y/n): ");
-        boolean spicySauce    = askYesNo("Add Spicy Sauce? (y/n): ");
-        boolean freshHerbs    = askYesNo("Add Fresh Herbs? (y/n): ");
+        if(wantExtras){
+            System.out.println("choose your options");
+            extraCheese   = askYesNo("Add Extra Cheese? (y/n): ");
+            extraSeasons  = askYesNo("Add Extra Seasons? (y/n): ");
+            spicySauce    = askYesNo("Add Spicy Sauce? (y/n): ");
+            freshHerbs    = askYesNo("Add Fresh Herbs? (y/n): ");
+
+        }
+        else{
+            System.out.println("no extra");
+        }
+
+
+
 
         DiscountStrategy strategy = chooseDiscountStrategy();
         DiscountContext ctx = buildDiscountContext(strategy);
@@ -219,7 +235,7 @@ public class Main {
     }
 
     private static CuisineFactory chooseCuisine() {
-        System.out.println("\nChoose cuisine set:");
+        System.out.println("Choose cuisine set:");
         System.out.println("  1) Kazakh");
         System.out.println("  2) Turkish");
         System.out.println("  3) Korean");
@@ -252,21 +268,42 @@ public class Main {
         }
     }
 
+    private static final Random random=new Random();
+
     private static DiscountContext buildDiscountContext(DiscountStrategy strategy) {
         DiscountContext ctx = new DiscountContext();
+        DayOfWeek[] days= DayOfWeek.values();
+        DayOfWeek randomDay=days[random.nextInt(days.length)];
+        LocalDate today=LocalDate.now();
+        while (today.getDayOfWeek()!=randomDay){
+            today=today.plusDays(1);
+        }
+        ctx.today=today;
+        System.out.println("Today is "+randomDay);
 
-        if (strategy instanceof PinkFriday) {
-            ctx.wearingPink = askYesNo("Are you wearing pink today? (y/n): ");
+
+        if(strategy instanceof PinkFriday){
+            if(randomDay==DayOfWeek.FRIDAY){
+                ctx.wearingPink=askYesNo("are you wearing pink today?");
+            }
+            else{
+                System.out.println("today is not friday, no discount bro");
+            }
+            return ctx;
+        }
+        if (strategy instanceof TsunamiDay){
+            Weather[] weathers=Weather.values();
+            ctx.weather=weathers[random.nextInt(weathers.length)];
+            System.out.println("today weather is "+ctx.weather);
         }
 
-        if (strategy instanceof DiceRoll) {
-            ctx.diceRoll = askIntInRange("Roll a dice (1-6): ", 1, 6);
+        if (strategy instanceof DiceRoll){
+            System.out.println("dice roll will randomly picked: ");
         }
 
-        if (strategy instanceof SpicyChallenge) {
+        if (strategy instanceof SpicyChallenge){
             ctx.spicyChallenge = askYesNo("Did you finish the spicy challenge? (y/n): ");
         }
-
         return ctx;
     }
 
@@ -304,7 +341,7 @@ public class Main {
         Side  previewSide  = factory.createSide();
         Drink previewDrink = factory.createDrink();
 
-        System.out.println("\n--- SELECTED SET MENU ---");
+        System.out.println("-- SELECTED SET MENU ---");
         System.out.println("Main dish : " + previewMeal.getName());
         System.out.println("Side dish : " + previewSide.getName());
         System.out.println("Drink     : " + previewDrink.getName());

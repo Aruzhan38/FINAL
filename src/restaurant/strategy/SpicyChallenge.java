@@ -21,6 +21,6 @@ public class SpicyChallenge implements DiscountStrategy{
 
     @Override
     public String name() {
-        return "you got discount for spicy challenge";
+        return "yay you got discount for spicy challenge";
     }
 }
