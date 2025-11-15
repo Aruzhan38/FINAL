@@ -1,6 +1,8 @@
 package restaurant.builder;
 
-import restaurant.core.*;
+import restaurant.core.drink.Drink;
+import restaurant.core.meal.Meal;
+import restaurant.core.side.Side;
 import restaurant.observer.Order;
 
 public class OrderBuilder {

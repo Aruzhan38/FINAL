@@ -1,7 +1,8 @@
 package restaurant.abstractfactory;
 
-import restaurant.core.*;
-import restaurant.factory.IskenderKebab;
+import restaurant.core.drink.*;
+import restaurant.core.meal.*;
+import restaurant.core.side.*;
 
 public class Turkish implements CuisineFactory {
 
@@ -22,22 +23,4 @@ public class Turkish implements CuisineFactory {
         return new Ayran();
     }
 
-    private static class Pilav implements Side {
-        @Override
-        public String getName()  {
-            return "Pilav"; }
-        @Override
-        public double getPrice() {
-            return 700;
-        }
-    }
-    private static class Ayran implements Drink {
-        @Override
-        public String getName() {
-            return "Ayran"; }
-        @Override
-        public double getPrice() {
-            return 650;
-        }
-    }
 }

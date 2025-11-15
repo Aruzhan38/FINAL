@@ -1,6 +1,9 @@
 package restaurant.observer;
 
-import restaurant.core.*;
+import restaurant.core.drink.Drink;
+import restaurant.core.meal.Meal;
+import restaurant.core.side.Side;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,10 +28,10 @@ public class Order {
         this.drink = drink;
     }
 
-    public String getId()    { return id; }
-    public Meal  getMeal()   { return meal; }
-    public Side  getSide()   { return side; }
-    public Drink getDrink()  { return drink; }
+    public String getId() { return id; }
+    public Meal  getMeal() { return meal; }
+    public Side  getSide() { return side; }
+    public Drink getDrink() { return drink; }
 
     public OrderStatus getStatus() { return status; }
 

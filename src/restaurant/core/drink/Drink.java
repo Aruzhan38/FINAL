@@ -1,8 +1,10 @@
-package restaurant.core;
+package restaurant.core.drink;
+
+import restaurant.core.MealVisitor;
 
 public interface Drink {
     String getName();
-    double getPrice();
+    int getPrice();
 
     default void accept(MealVisitor visitor) { visitor.visit(this); }
 }

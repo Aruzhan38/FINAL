@@ -1,10 +1,11 @@
 package restaurant;
 
 import restaurant.abstractfactory.*;
-import restaurant.core.*;
+import restaurant.core.drink.Drink;
+import restaurant.core.meal.Meal;
+import restaurant.core.side.Side;
 import restaurant.facade.OrderFacade;
-import restaurant.observer.Order;
-import restaurant.observer.OrderStatus;
+import restaurant.observer.*;
 import restaurant.strategy.*;
 import restaurant.visitor.NutritionVisitor;
 
@@ -14,30 +15,9 @@ import java.time.LocalTime;
 import java.util.*;
 
 public class Main {
-
     private static final Scanner in = new Scanner(System.in);
-
     private static final List<OrderRecord> ORDER_HISTORY = new ArrayList<>();
-
-    private static class OrderRecord {
-        final String orderId;
-        final String customerName;
-        final String cuisine;
-        final String discountName;
-        final OrderStatus finalStatus;
-
-        OrderRecord(String orderId,
-                    String customerName,
-                    String cuisine,
-                    String discountName,
-                    OrderStatus finalStatus) {
-            this.orderId = orderId;
-            this.customerName = customerName;
-            this.cuisine = cuisine;
-            this.discountName = discountName;
-            this.finalStatus = finalStatus;
-        }
-    }
+    private static final AnalyticsService analytics = new AnalyticsService();
 
     public static void main(String[] args) {
 
@@ -57,8 +37,8 @@ public class Main {
 
             switch (choice) {
                 case 1 -> makeOrder(facade);
-                case 2 -> showOrderHistory();
-                case 3 -> showStatistics();
+                case 2 -> analytics.showOrderHistory(ORDER_HISTORY);
+                case 3 -> analytics.showStatistics(ORDER_HISTORY);
                 case 4 -> showDishesInfo();
                 case 5 -> {
                     System.out.println("\nThank you for using our system. Goodbye! 👋");
@@ -102,92 +82,27 @@ public class Main {
         DiscountStrategy strategy = chooseDiscountStrategy();
         DiscountContext ctx = buildDiscountContext(strategy);
 
-        Order order = facade.createOrder(
-                factory,
-                extraCheese,
-                extraSeasons,
-                spicySauce,
-                freshHerbs,
-                strategy,
-                ctx,
-                customerName
+        Order order = facade.createOrder(factory, extraCheese, extraSeasons, spicySauce, freshHerbs,
+                strategy, ctx, customerName
         );
 
         System.out.println("\n--- ORDER STATUS FLOW ---");
-        waitEnter("Press ENTER to ACCEPT the order...");
+        waitEnter("Press ENTER to ACCEPT the order... ");
         facade.updateStatus(order, OrderStatus.ACCEPTED);
 
-        waitEnter("Press ENTER to start COOKING...");
+        waitEnter("Press ENTER to start COOKING... ");
         facade.updateStatus(order, OrderStatus.COOKING);
 
-        waitEnter("Press ENTER when the order is READY...");
+        waitEnter("Press ENTER when the order is READY... ");
         facade.updateStatus(order, OrderStatus.READY);
 
-        waitEnter("Press ENTER to mark as DELIVERED...");
+        waitEnter("Press ENTER to mark as DELIVERED... ");
         facade.updateStatus(order, OrderStatus.DELIVERED);
 
         String discountName = (strategy == null) ? "No discount" : strategy.name();
-        ORDER_HISTORY.add(
-                new OrderRecord(
-                        order.getId(),
-                        customerName,
-                        cuisineName,
-                        discountName,
-                        order.getStatus()
-                )
-        );
+        ORDER_HISTORY.add( new OrderRecord( order.getId(), customerName, cuisineName, discountName, order.getStatus()));
 
         System.out.println("\nOrder finished. Returning to main menu...\n");
-    }
-
-    private static void showOrderHistory() {
-        System.out.println("\n=== ORDER HISTORY ===");
-        if (ORDER_HISTORY.isEmpty()) {
-            System.out.println("No orders yet.");
-        } else {
-            for (OrderRecord r : ORDER_HISTORY) {
-                System.out.println(
-                        r.orderId + " | " +
-                                "customer: " + r.customerName + " | " +
-                                "cuisine: " + r.cuisine + " | " +
-                                "discount: " + r.discountName + " | " +
-                                "status: " + r.finalStatus
-                );
-            }
-        }
-        System.out.println("----------------------------------");
-        System.out.println("Press ENTER to return to main menu...");
-        in.nextLine();
-    }
-
-    private static void showStatistics() {
-        System.out.println("\n=== STATISTICS ===");
-
-        int total = ORDER_HISTORY.size();
-        int kazakh = 0, turkish = 0, korean = 0;
-        int delivered = 0;
-
-        for (OrderRecord r : ORDER_HISTORY) {
-            switch (r.cuisine.toLowerCase()) {
-                case "kazakh"  -> kazakh++;
-                case "turkish" -> turkish++;
-                case "korean"  -> korean++;
-            }
-            if (r.finalStatus == OrderStatus.DELIVERED) {
-                delivered++;
-            }
-        }
-
-        System.out.println("Total orders   : " + total);
-        System.out.println("Delivered      : " + delivered);
-        System.out.println("By cuisine:");
-        System.out.println("  Kazakh       : " + kazakh);
-        System.out.println("  Turkish      : " + turkish);
-        System.out.println("  Korean       : " + korean);
-
-        System.out.println("----------------------------------");
-        System.out.println("Press ENTER to return to main menu...");
-        in.nextLine();
     }
 
     private static void showDishesInfo() {
@@ -216,21 +131,21 @@ public class Main {
     private static void printMealInfo(Meal meal) {
         NutritionVisitor v = new NutritionVisitor();
         meal.accept(v);
-        System.out.printf("- %s | price: %.2f%n",
+        System.out.printf("- %s | price: %d%n",
                 meal.getName(), meal.getPrice());
     }
 
     private static void printSideInfo(Side side) {
         NutritionVisitor v = new NutritionVisitor();
         side.accept(v);
-        System.out.printf("- %s | price: %.2f | kcal: %d%n",
+        System.out.printf("- %s | price: %d | kcal: %d%n",
                 side.getName(), side.getPrice(), v.getTotalKcal());
     }
 
     private static void printDrinkInfo(Drink drink) {
         NutritionVisitor v = new NutritionVisitor();
         drink.accept(v);
-        System.out.printf("- %s | price: %.2f | kcal: %d%n",
+        System.out.printf("- %s | price: %d | kcal: %d%n",
                 drink.getName(), drink.getPrice(), v.getTotalKcal());
     }
 
@@ -241,12 +156,12 @@ public class Main {
         System.out.println("  3) Korean");
 
         int choice = askIntInRange("Your choice (1-3): ", 1, 3);
-        switch (choice) {
-            case 1: return new Kazakh();
-            case 2: return new Turkish();
-            case 3: return new Korean();
-            default: throw new IllegalStateException("Unexpected cuisine: " + choice);
-        }
+        return switch (choice) {
+            case 1 -> new Kazakh();
+            case 2 -> new Turkish();
+            case 3 -> new Korean();
+            default -> throw new IllegalStateException("Unexpected cuisine: " + choice);
+        };
     }
 
     private static DiscountStrategy chooseDiscountStrategy() {
@@ -258,14 +173,14 @@ public class Main {
         System.out.println("  4) Spicy Challenge");
 
         int choice = askIntInRange("Your choice (0-4): ", 0, 4);
-        switch (choice) {
-            case 0: return null;
-            case 1: return new PinkFriday();
-            case 2: return new DiceRoll();
-            case 3: return new TsunamiDay();
-            case 4: return new SpicyChallenge();
-            default: throw new IllegalStateException("Unexpected strategy: " + choice);
-        }
+        return switch (choice) {
+            case 0 -> null;
+            case 1 -> new PinkFriday();
+            case 2 -> new DiceRoll();
+            case 3 -> new TsunamiDay();
+            case 4 -> new SpicyChallenge();
+            default -> throw new IllegalStateException("Unexpected strategy: " + choice);
+        };
     }
 
     private static final Random random=new Random();

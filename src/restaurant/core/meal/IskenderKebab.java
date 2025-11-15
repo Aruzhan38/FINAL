@@ -1,6 +1,4 @@
-package restaurant.factory;
-
-import restaurant.core.Meal;
+package restaurant.core.meal;
 
 public final class IskenderKebab implements Meal {
 
@@ -10,7 +8,7 @@ public final class IskenderKebab implements Meal {
     }
 
     @Override
-    public double getPrice() {
+    public int getPrice() {
         return 3900;
     }
 }

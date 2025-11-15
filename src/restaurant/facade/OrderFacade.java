@@ -2,7 +2,9 @@ package restaurant.facade;
 
 import restaurant.abstractfactory.CuisineFactory;
 import restaurant.builder.OrderBuilder;
-import restaurant.core.*;
+import restaurant.core.drink.Drink;
+import restaurant.core.meal.Meal;
+import restaurant.core.side.Side;
 import restaurant.decorator.*;
 import restaurant.observer.*;
 import restaurant.strategy.*;
@@ -12,7 +14,7 @@ public class OrderFacade {
 
     private static int counter = 1;
     private static String nextOrderId() {
-        return "ORD-" + (counter++);
+        return "ORDER-" + (counter++);
     }
 
     public Order createOrder(CuisineFactory factory,
@@ -26,21 +28,21 @@ public class OrderFacade {
 
         String id = nextOrderId();
 
-        Meal  meal  = factory.createMeal();
-        Side  side  = factory.createSide();
+        Meal meal = factory.createMeal();
+        Side side = factory.createSide();
         Drink drink = factory.createDrink();
 
-        if (spicySauce)   meal = new SpicySauce(meal);
+        if (spicySauce) meal = new SpicySauce(meal);
         if (extraSeasons) meal = new ExtraSeasons(meal);
-        if (extraCheese)  meal = new ExtraCheese(meal);
-        if (freshHerbs)   meal = new FreshHerbs(meal);
+        if (extraCheese) meal = new ExtraCheese(meal);
+        if (freshHerbs) meal = new FreshHerbs(meal);
 
         Order order = new OrderBuilder()
                 .setId(id)
                 .build();
         attachObservers(order, customerName, "MainLine");
 
-        int basePrice = calcBasePrice(meal, side, drink);
+        int basePrice = (int) calcBasePrice(meal, side, drink);
 
         int finalPrice = basePrice;
         String discountName = "No discount";
@@ -55,8 +57,7 @@ public class OrderFacade {
 
         int kcal = calcCalories(meal, side, drink);
 
-        printSummary(order, meal, side, drink,
-                basePrice, finalPrice, discountName, kcal);
+        printSummary(order, meal, side, drink, basePrice, finalPrice, discountName, kcal);
 
         return order;
     }
@@ -72,18 +73,18 @@ public class OrderFacade {
         order.setStatus(newStatus);
     }
 
-    private int calcBasePrice(Meal meal, Side side, Drink drink) {
+    private double calcBasePrice(Meal meal, Side side, Drink drink) {
         int total = 0;
-        if (meal  != null) total += meal.getPrice();
-        if (side  != null) total += side.getPrice();
+        if (meal != null) total += meal.getPrice();
+        if (side != null) total += side.getPrice();
         if (drink != null) total += drink.getPrice();
         return total;
     }
 
     private int calcCalories(Meal meal, Side side, Drink drink) {
         NutritionVisitor visitor = new NutritionVisitor();
-        if (meal  != null) meal.accept(visitor);
-        if (side  != null) side.accept(visitor);
+        if (meal != null) meal.accept(visitor);
+        if (side != null) side.accept(visitor);
         if (drink != null) drink.accept(visitor);
         return visitor.getTotalKcal();
     }
@@ -101,8 +102,8 @@ public class OrderFacade {
         System.out.println("Order ID: " + order.getId());
         System.out.println("Type    : SET");
 
-        if (meal  != null) System.out.println("Meal   : " + meal.getName());
-        if (side  != null) System.out.println("Side   : " + side.getName());
+        if (meal != null) System.out.println("Meal   : " + meal.getName());
+        if (side != null) System.out.println("Side   : " + side.getName());
         if (drink != null) System.out.println("Drink  : " + drink.getName());
 
         System.out.println("----------------------------------------------");

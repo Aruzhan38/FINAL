@@ -1,6 +1,6 @@
 package restaurant.decorator;
 
-import restaurant.core.Meal;
+import restaurant.core.meal.Meal;
 
 public class FreshHerbs extends MealExtra{
     public FreshHerbs(Meal base){
@@ -9,11 +9,11 @@ public class FreshHerbs extends MealExtra{
 
     @Override
     public String getName() {
-        return base.getName()+" Fresh Herbs";
+        return base.getName()+" + Fresh Herbs";
     }
 
     @Override
-    public double getPrice() {
+    public int getPrice() {
         return base.getPrice()+100;
     }
 }

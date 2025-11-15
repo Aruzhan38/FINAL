@@ -1,4 +1,4 @@
-package restaurant.factory;
+package restaurant.core.meal;
 
 public enum MealType {
     MANTY,

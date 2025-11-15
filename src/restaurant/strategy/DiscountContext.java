@@ -1,8 +1,7 @@
 package restaurant.strategy;
 
-import restaurant.core.Meal;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import restaurant.core.meal.Meal;
+import java.time.*;
 
 public class DiscountContext {
     public Meal meal;
