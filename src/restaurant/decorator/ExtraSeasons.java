@@ -9,11 +9,11 @@ public class ExtraSeasons extends MealExtra{
 
     @Override
     public String getName() {
-        return super.getName()+"extra seasons";
+        return base.getName()+" Extra Seasons";
     }
 
     @Override
     public double getPrice() {
-        return super.getPrice()+150;
+        return base.getPrice()+150;
     }
 }

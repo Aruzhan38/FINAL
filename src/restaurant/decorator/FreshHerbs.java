@@ -9,11 +9,11 @@ public class FreshHerbs extends MealExtra{
 
     @Override
     public String getName() {
-        return super.getName()+" fresh herbs";
+        return base.getName()+" Fresh Herbs";
     }
 
     @Override
     public double getPrice() {
-        return super.getPrice()+100;
+        return base.getPrice()+100;
     }
 }

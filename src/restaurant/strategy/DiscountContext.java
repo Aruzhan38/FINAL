@@ -1,7 +1,6 @@
 package restaurant.strategy;
 
 import restaurant.core.Meal;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 

@@ -1,12 +1,13 @@
 package restaurant.decorator;
 
-import restaurant.core.Meal;
+import restaurant.core.*;
 
 public abstract class MealExtra implements Meal {
     protected final Meal base;
 
-    protected MealExtra(Meal base){
-        this.base=base;
+    protected MealExtra(Meal base) {
+        if (base == null) throw new IllegalArgumentException("base meal is null");
+        this.base = base;
     }
 
     @Override
@@ -19,4 +20,9 @@ public abstract class MealExtra implements Meal {
         return base.getPrice();
     }
 
+    @Override
+    public void accept(MealVisitor visitor) {
+        visitor.visit(this);
+        base.accept(visitor);
+    }
 }

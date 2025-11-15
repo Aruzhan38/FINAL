@@ -11,26 +11,26 @@ public class NutritionVisitor implements MealVisitor {
 
     public NutritionVisitor() {
 
-        kcalByName.put("Manty", 420);
-        kcalByName.put("Iskender Kebab", 650);
-        kcalByName.put("Tteokbokki", 380);
+        kcalByName.put("manty", 420);
+        kcalByName.put("iskender kebab", 650);
+        kcalByName.put("tteokbokki", 380);
 
-        kcalByName.put("Baursak", 250);
-        kcalByName.put("Pilav", 270);
-        kcalByName.put("Kimchi", 40);
+        kcalByName.put("baursak", 250);
+        kcalByName.put("pilav", 270);
+        kcalByName.put("kimchi", 40);
 
-        kcalByName.put("Kymyz", 120);
-        kcalByName.put("Ayran", 90);
-        kcalByName.put("Barley Tea", 5);
+        kcalByName.put("kymyz", 120);
+        kcalByName.put("ayran", 90);
+        kcalByName.put("barley tea", 5);
 
-        kcalByName.put("Spicy Sauce", 20);
-        kcalByName.put("Extra Cheese", 110);
-        kcalByName.put("Extra Meat", 180);
-        kcalByName.put("Fresh Herbs", 5);
+        kcalByName.put("spicy sauce", 20);
+        kcalByName.put("extra cheese", 110);
+        kcalByName.put("extra meat", 180);
+        kcalByName.put("fresh herbs", 5);
     }
 
     public NutritionVisitor with(String name, int kcal) {
-        kcalByName.put(name, kcal);
+        kcalByName.put(name.toLowerCase(), kcal);
         return this;
     }
 
@@ -39,8 +39,14 @@ public class NutritionVisitor implements MealVisitor {
     @Override public void visit(Drink drink){ add(drink.getName()); }
 
     private void add(String name) {
-        totalKcal += kcalByName.getOrDefault(name, 0);
+        String lower = name.toLowerCase();
+        for (Map.Entry<String, Integer> e : kcalByName.entrySet()) {
+            if (lower.contains(e.getKey())) {
+                totalKcal += e.getValue();
+            }
+        }
     }
+
 
     public int getTotalKcal() {
         return totalKcal;

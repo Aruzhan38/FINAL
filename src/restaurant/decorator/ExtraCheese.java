@@ -2,18 +2,19 @@ package restaurant.decorator;
 
 import restaurant.core.Meal;
 
-public class ExtraCheese extends MealExtra{
-    public ExtraCheese(Meal base){
+public class ExtraCheese extends MealExtra {
+    public ExtraCheese(Meal base) {
         super(base);
     }
 
     @Override
     public String getName() {
-        return super.getName()+" extra cheese";
+        return base.getName() + " + Extra Cheese";
     }
 
     @Override
     public double getPrice() {
-        return super.getPrice()+300;
+        return base.getPrice() + 300;
     }
 }
+

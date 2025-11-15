@@ -2,7 +2,7 @@ package restaurant.strategy;
 
 import java.time.DayOfWeek;
 
-public abstract class PinkFriday implements DiscountStrategy{
+public class PinkFriday implements DiscountStrategy{
     private DiscountContext ctx;
 
     @Override

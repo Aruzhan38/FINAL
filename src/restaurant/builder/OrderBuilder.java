@@ -2,13 +2,18 @@ package restaurant.builder;
 
 import restaurant.core.*;
 import restaurant.observer.Order;
-import restaurant.strategy.PricingStrategy;
 
 public class OrderBuilder {
+
+    private String id;
     private Meal meal;
     private Side side;
     private Drink drink;
-    private PricingStrategy pricingStrategy;
+
+    public OrderBuilder setId(String id) {
+        this.id = id;
+        return this;
+    }
 
     public OrderBuilder setMeal(Meal meal) {
         this.meal = meal;
@@ -25,16 +30,10 @@ public class OrderBuilder {
         return this;
     }
 
-    public OrderBuilder setPricingStrategy(PricingStrategy strategy) {
-        this.pricingStrategy = strategy;
-        return this;
-    }
-
     public Order build() {
-        Order order = new Order(meal, side, drink);
-        if (pricingStrategy != null) {
-            order.setPricingStrategy(pricingStrategy);
+        if (id == null || id.isBlank()) {
+            throw new IllegalStateException("Order id must be set before build()");
         }
-        return order;
+        return new Order(id, meal, side, drink);
     }
 }

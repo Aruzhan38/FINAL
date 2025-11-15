@@ -1,101 +1,116 @@
 package restaurant.facade;
 
-import restaurant.core.Drink;
-import restaurant.core.Meal;
-import restaurant.core.Side;
+import restaurant.abstractfactory.CuisineFactory;
+import restaurant.builder.OrderBuilder;
+import restaurant.core.*;
 import restaurant.decorator.*;
-import restaurant.factory.MealFactory;
-import restaurant.factory.MealType;
-import restaurant.observer.Order;
-import restaurant.observer.OrderObserver;
-import restaurant.observer.OrderStatus;
-import restaurant.strategy.DiscountContext;
-import restaurant.strategy.DiscountStrategy;
-import java.util.List;
+import restaurant.observer.*;
+import restaurant.strategy.*;
+import restaurant.visitor.NutritionVisitor;
 
 public class OrderFacade {
-    public enum Extra { CHEESE, SPICY, HERBS, SEASONS }
-    public Meal createBase(MealFactory factory, MealType type) {
-        return factory.createMeal(type);
-    }
-    public Meal applyExtras(Meal base, boolean cheese, boolean spicy, boolean herbs, boolean seasons) {
-        Meal meal = base;
-        if (cheese)  meal = new ExtraCheese(meal);
-        if (spicy)   meal = new SpicySauce(meal);
-        if (herbs)   meal = new FreshHerbs(meal);
-        if (seasons) meal = new ExtraSeasons(meal);
-        return meal;
+
+    private static int counter = 1;
+    private static String nextOrderId() {
+        return "ORD-" + (counter++);
     }
 
-    public Meal makeCombo(Meal current, Drink drink, Side side, double  discount, String label) {
-        return new Combo(current, drink, side, discount, label);
-    }
+    public Order createOrder(CuisineFactory factory,
+                             boolean extraCheese,
+                             boolean extraSeasons,
+                             boolean spicySauce,
+                             boolean freshHerbs,
+                             DiscountStrategy discount,
+                             DiscountContext ctx,
+                             String customerName) {
 
+        String id = nextOrderId();
 
-    public Order createOrder(String orderId, Meal meal, List<OrderObserver> observers) {
-        Order order = new Order(orderId);
-        if (observers != null) {
-            for (OrderObserver o : observers) order.addObserver(o);
+        Meal  meal  = factory.createMeal();
+        Side  side  = factory.createSide();
+        Drink drink = factory.createDrink();
+
+        if (spicySauce)   meal = new SpicySauce(meal);
+        if (extraSeasons) meal = new ExtraSeasons(meal);
+        if (extraCheese)  meal = new ExtraCheese(meal);
+        if (freshHerbs)   meal = new FreshHerbs(meal);
+
+        Order order = new OrderBuilder()
+                .setId(id)
+                .build();
+        attachObservers(order, customerName, "MainLine");
+
+        int basePrice = calcBasePrice(meal, side, drink);
+
+        int finalPrice = basePrice;
+        String discountName = "No discount";
+
+        if (discount != null) {
+            discount.collect(ctx);
+            if (discount.validate()) {
+                finalPrice = discount.apply(basePrice);
+            }
+            discountName = discount.name();
         }
-        order.setStatus(OrderStatus.ACCEPTED);
+
+        int kcal = calcCalories(meal, side, drink);
+
+        printSummary(order, meal, side, drink,
+                basePrice, finalPrice, discountName, kcal);
+
         return order;
     }
 
-    public PriceResult priceWithBestStrategy(Meal meal,
-                                             List<DiscountStrategy> strategies,
-                                             DiscountContext ctx) {
-        double base = meal.getPrice();
-        if (strategies == null || strategies.isEmpty()) {
-            return new PriceResult(base, "NoDiscount");
-        }
-        double best = base;
-        String applied = "NoDiscount";
-        for (DiscountStrategy s : strategies) {
-            s.collect(ctx);
-            if (s.validate()) {
-                double candidate = s.apply((int)Math.round(base));
-                if (candidate < best) { best = candidate; applied = s.name(); }
-            }
-        }
-        return new PriceResult(best, applied);
-    }
-    public FullOrder createComboOrder(String orderId,
-                                      MealFactory factory, MealType type,
-                                      List<Extra> extras,
-                                      Drink drink, Side side, double comboDiscount, String comboLabel,
-                                      List<OrderObserver> observers,
-                                      List<DiscountStrategy> strategies,
-                                      DiscountContext ctx) {
-
-        Meal base  = createBase(factory, type);
-        Meal withExtras = applyExtras(base, extras);
-        Meal combo = makeCombo(withExtras, drink, side, comboDiscount, comboLabel);
-
-        if (ctx != null) ctx.meal = combo;
-
-        PriceResult priced = priceWithBestStrategy(combo, strategies, ctx);
-        Order order = createOrder(orderId, combo, observers);
-
-        return new FullOrder(order, combo, priced.finalPrice, priced.appliedStrategy);
+    private void attachObservers(Order order, String customerName, String kitchenName) {
+        OrderObserver kitchen  = new KitchenDisplay(kitchenName);
+        OrderObserver customer = new CustomerApp(customerName);
+        order.addObserver(kitchen);
+        order.addObserver(customer);
     }
 
-    private Meal applyExtras(Meal base, List<Extra> extras) {
-
+    public void updateStatus(Order order, OrderStatus newStatus) {
+        order.setStatus(newStatus);
     }
 
-    public static class PriceResult {
-        public final double finalPrice;
-        public final String appliedStrategy;
-        public PriceResult(double p, String s) { this.finalPrice = p; this.appliedStrategy = s; }
+    private int calcBasePrice(Meal meal, Side side, Drink drink) {
+        int total = 0;
+        if (meal  != null) total += meal.getPrice();
+        if (side  != null) total += side.getPrice();
+        if (drink != null) total += drink.getPrice();
+        return total;
     }
 
-    public static class FullOrder {
-        public final Order order;
-        public final Meal meal;
-        public final double finalPrice;
-        public final String strategy;
-        public FullOrder(Order o, Meal m, double p, String s) {
-            this.order=o; this.meal=m; this.finalPrice=p; this.strategy=s;
-        }
+    private int calcCalories(Meal meal, Side side, Drink drink) {
+        NutritionVisitor visitor = new NutritionVisitor();
+        if (meal  != null) meal.accept(visitor);
+        if (side  != null) side.accept(visitor);
+        if (drink != null) drink.accept(visitor);
+        return visitor.getTotalKcal();
+    }
+
+    private void printSummary(Order order,
+                              Meal meal,
+                              Side side,
+                              Drink drink,
+                              int basePrice,
+                              int finalPrice,
+                              String discountName,
+                              int kcal) {
+
+        System.out.println("==============================================");
+        System.out.println("Order ID: " + order.getId());
+        System.out.println("Type    : SET");
+
+        if (meal  != null) System.out.println("Meal   : " + meal.getName());
+        if (side  != null) System.out.println("Side   : " + side.getName());
+        if (drink != null) System.out.println("Drink  : " + drink.getName());
+
+        System.out.println("----------------------------------------------");
+        System.out.println("Base price : " + basePrice);
+        System.out.println("Discount   : " + discountName);
+        System.out.println("Final price: " + finalPrice);
+        System.out.println("Calories   : " + kcal + " kcal");
+        System.out.println("Status     : " + order.getStatus());
+        System.out.println("==============================================");
     }
 }
